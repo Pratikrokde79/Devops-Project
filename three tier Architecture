@@ -1,0 +1,434 @@
+ Apache HTTP
+
+
+ 
+The Apache HTTP Web Service, commonly known as Apache, is an open-source web server software that allows a computer to host websites and web applications. It is one of the most widely used web servers in the world and is known for its robustness, flexibility, and extensive features.
+
+In the context of an enterprise application, imagine your company has a robust web-based application that employees and customers need to access. Apache acts as the intermediary that handles requests from users’ browsers, processes these requests, and serves the appropriate web pages or data back to the users.
+
+Example in an Indian Enterprise Scenario:
+Consider a large bank in India that offers an online banking portal. This portal allows customers to check account balances, transfer money, pay bills, and more. The bank's IT infrastructure uses Apache on Linux servers to host this web application.
+
+When a customer logs in to their online banking account:
+
+Request Handling: The customer's request to access the login page is sent to the Apache server.
+Processing the Request: Apache processes this request, possibly interacting with backend systems like databases to verify the user's credentials.
+Response: Once verified, Apache serves the appropriate web page (e.g., the user's account summary) back to the customer's browser.
+Throughout this process, Apache ensures that the application remains secure, fast, and reliable, providing a seamless experience for the bank's customers.
+
+
+Prerequisite for Apache HTTP Installation:
+You need to install following packages in order to install Apache HTTP.
+#yum install apr*
+
+#yum install gcc  wget net-tools make
+
+#yum install pcre pcre-devel
+
+#sudo yum install redhat-rpm-config
+
+Create a separate directory to keep downloaded software.
+#mkdir /softwares
+
+#cd /softwares
+
+Perform following steps to download httpd-2.4.6.tar.gz software and install.
+Download the Apache HTTP Server source package version 2.4.6.
+STEP 1: #wget https://archive.apache.org/dist/httpd/httpd-2.4.6.tar.gz
+
+Extract the downloaded tar.gz file.
+STEP 2: #tar -zxvf httpd-2.4.6.tar.gz
+
+Navigate into the extracted Apache HTTP Server directory.
+STEP 3: #cd httpd-2.4.6
+
+Configure the installation with the specified prefix directory (/opt/apache/).
+STEP 4: #./configure --prefix=/opt/apache/
+
+Compile the Apache HTTP Server source code.
+STEP 5: #make
+
+Install the compiled Apache HTTP Server to the specified directory.
+STEP 6: #make install
+
+Restart the Apache HTTP Server using the installed apachectl script.
+STEP 7:#/opt/apache/bin/apachectl -k restart
+
+Check for active network connections to verify Apache is running.
+STEP 8:#netstat -ntlp
+
+Verify Apache processes are running by searching for HTTP-related processes.
+STEP 9:#ps -aef | grep http
+
+Remove the extracted source directory to clean up.
+STEP 10:#rm -rf /softwares/httpd-2.4.6
+
+Once installation done you can access the default web page which can be displayed from  /opt/apache/htdocs/index.html.
+Disable OS Firewalld service to avoid port blocking.
+
+STEP11: #systemctl disable firewalld --now
+
+Access in browser: http://yourserverIP
+
+Apache TOMCAT
+ 
+
+
+ 
+Apache Tomcat is a popular application server used in Linux environments to host and run Java-based web applications. Think of it like a special kind of software that acts as a middleman between your web application and the web users trying to access it. It handles the heavy lifting of running your application so that it can be accessed smoothly and efficiently by users on the internet.
+
+
+Apache Tomcat works similarly. It:
+
+Receives Requests: When someone wants to access your web application, their request first goes to Apache Tomcat.
+Processes Requests: Tomcat then processes this request. It runs the Java code, handles database queries if needed, and prepares the response.
+Sends Responses: Finally, it sends back the processed information (like a web page) to the user's web browser.
+
+Apache TOMCAT Installation and configuration:
+You need Java to run Apache Tomcat because Tomcat is built using Java. This command installs Java version 1.8 on your Linux system.
+# yum install java-1.8.0
+
+Move to the /softwares directory. Then, download the Apache Tomcat version 9.0.8 from the internet. Think of it like downloading an installer for a software.
+#cd /softwares
+
+# wget https://archive.apache.org/dist/tomcat/tomcat-9/v9.0.8/bin/apache-tomcat-9.0.8.tar.gz
+
+Extract the downloaded Tomcat file into the /opt/ directory. This is like unzipping a file to a specific folder.
+#tar -zxpvf apache-tomcat-9.0.8.tar.gz -C /opt/
+
+Go to the /opt/ directory and rename the extracted folder from apache-tomcat-9.0.8 to a simpler name, tomcat
+#cd /opt/
+
+#mv apache-tomcat-9.0.8 tomcat
+
+Add the Tomcat home directory path (/opt/tomcat/) to your environment variables so that your system knows where to find Tomcat. This makes it easier to run Tomcat commands from anywhere. The source command refreshes your settings.
+#echo "export CATALINA_HOME='/opt/tomcat/'" >> ~/.bashrc
+
+#source ~/.bashrc
+
+Open the tomcat-users.xml file to add a user with administrative rights. This user (admin) will have a password (1q2w!Q@W) and all necessary roles to manage Tomcat.
+#vi /opt/tomcat/conf/tomcat-users.xml
+
+<user name="admin" password="1q2w!Q@W" roles="admin,manager,admin-gui,admin-script,manager-gui,manager-script,manager-jmx,manager-status" />
+
+Open the context.xml file for the Manager app and remove the lines that restrict access to specific IP addresses. This allows you to access the Manager app from any IP.
+#vi /opt/tomcat/webapps/manager/META-INF/context.xml
+
+##Remove These Lines:
+
+<Valve className="org.apache.catalina.valves.RemoteAddrValve"
+
+         allow="\d+\.\d+\.\d+\.\d+" />
+
+Go to the Tomcat bin directory and run the startup.sh script to start the Tomcat server. This script gets Tomcat up and running, ready to serve your applications.
+# cd /opt/tomcat/bin/
+
+#./startup.sh
+
+
+
+Open the web browser and type the following URL:
+
+http://{ip-address-or-Hostname}:8080
+
+
+
+Integration Of HTTP AND TOMCAT
+You need to edit the Apache HTTP server configuration file. The vi command opens the httpd.conf file located in the /opt/apache/conf/ directory and add these lines at the bottom of the httpd.conf file.
+#vi /opt/apache/conf/httpd.conf
+
+<VirtualHost *:80>
+
+ServerAdmin support@informatrixlntd.com
+
+ServerName YOURIPADDRESS
+
+RewriteEngine On
+
+RewriteRule ^/$ /examples [R=301]
+
+ProxyRequests Off
+
+ProxyPreserveHost On
+
+<Proxy *>
+
+Order allow,deny
+
+Allow from all
+
+</Proxy>
+
+ProxyPass / http://127.0.0.1:8080/
+
+ProxyPassReverse / http://127.0.0.1:8080/
+
+ErrorLog logs/examples.informatrixlntd.com-error_log
+
+CustomLog logs/examples.informatrixlntd.com-access_log common
+
+</VirtualHost>
+
+
+
+Explanation:
+
+<VirtualHost *:80>: This block sets up a virtual host that listens on port 80, which is the default HTTP port.
+ServerAdmin support@informatrixlntd.com: This specifies the email address for the server administrator. If there are issues, this is the contact email.
+ServerName YOURIPADDRESS: This sets the server's IP address or domain name. Replace YOURIPADDRESS with your actual IP address or domain name.
+RewriteEngine On: This enables the URL rewriting engine.
+RewriteRule ^/$ /examples [R=301]: This rule redirects requests from the root URL (/) to the /examples directory with a status code of 301 (permanent redirect).
+ProxyRequests Off: This disables forward proxying.
+ProxyPreserveHost On: This tells Apache to pass the original Host header to the backend server (Tomcat).
+<Proxy *> ... </Proxy>: This block allows all incoming connections to be proxied.
+Order allow,deny and Allow from all: These lines configure access control, allowing all IP addresses to access the proxy.
+ProxyPass / http://127.0.0.1:8080/: This forwards all requests from the Apache server to the Tomcat server running on localhost (127.0.0.1) at port 8080.
+ProxyPassReverse / http://127.0.0.1:8080/: This modifies the response headers from Tomcat so that they are correctly interpreted by clients.
+ErrorLog logs/examples.informatrixlntd.com-error_log: This sets the file where error logs for this virtual host will be stored.
+CustomLog logs/examples.informatrixlntd.com-access_log common: This sets the file where access logs for this virtual host will be stored.
+
+Enable Apache Modules which require for url redirection:
+You need to edit the Apache HTTP server configuration file again. The vi command opens the httpd.conf file located in the /opt/apache/conf/ directory.
+#vi /opt/apache/conf/httpd.conf
+
+LoadModule rewrite_module modules/mod_rewrite.so
+
+LoadModule proxy_module modules/mod_proxy.so
+
+LoadModule proxy_http_module modules/mod_proxy_http.so
+
+Where:
+
+
+LoadModule rewrite_module modules/mod_rewrite.so: This line loads the mod_rewrite module, which allows Apache to rewrite URLs. URL rewriting is used to redirect or modify incoming URL requests to different URLs, which is useful for the redirects you set up earlier.
+LoadModule proxy_module modules/mod_proxy.so: This line loads the mod_proxy module, which enables Apache to act as a proxy server. Proxy servers forward requests from clients to another server.
+LoadModule proxy_http_module modules/mod_proxy_http.so: This line loads the mod_proxy_http module, which extends mod_proxy to support proxying HTTP requests. This is essential for forwarding HTTP requests to your Tomcat server.
+Restart Apache HTTP Web Service:
+#/opt/apache/bin/apachectl -k restart
+
+Now try to access http://{ip-address} and you will automatically redirect to http://{ip-address}/examples 
+
+
+
+MySQL Database:
+ 
+
+ 
+MySQL is an open-source relational database management system (RDBMS) that uses Structured Query Language (SQL) for accessing and managing databases. It is one of the most popular databases in the world, known for its speed, reliability, and ease of use. MySQL is commonly used in web applications
+Consider a scenario where a company wants to manage its employee records, payroll, and project assignments. MySQL can be used to create a centralized database system where:
+
+Employee Table: Stores employee details like name, employee ID, department, contact information, etc.
+Payroll Table: Contains payroll information such as salary, bonuses, deductions, etc.
+Projects Table: Keeps track of projects, assigned employees, project deadlines, etc.
+The HR department can use this database to efficiently manage and retrieve employee information, process payroll, and track project progress.
+
+
+Versions of MySQL:
+
+MySQL Community Edition
+Description: The Community Edition is the free, open-source version of MySQL. It includes all the core features of MySQL and is suitable for small to medium-sized applications.
+Suitable for: Non-commercial projects, small to medium-sized businesses, and educational purposes.
+Advantages: Free to use, large community support, frequent updates.
+MySQL Enterprise Edition
+Description: The Enterprise Edition includes additional features aimed at improving performance, security, and manageability. It also provides enterprise-level support from Oracle, the company that owns MySQL.
+Suitable for: Large-scale, mission-critical applications and enterprise environments where high availability, scalability, and security are paramount.
+Advantages: Advanced features like Enterprise Monitor, Enterprise Backup, and advanced security features; professional support; regular patches and updates.
+MySQL Cluster
+Description: MySQL Cluster is designed for applications that require high availability and scalability. It provides a distributed, multi-master database with no single point of failure.
+Suitable for: Applications needing extreme high availability and scalability, such as telecommunications, finance, and e-commerce platforms.
+Advantages: Real-time performance, automatic sharding, high availability, and geographic replication.
+
+MySQL Server Installation:
+
+This command installs necessary compatibility libraries (ncurses-compat-libs) that MySQL needs to run on Rocky Linux 9.
+# dnf --enablerepo=devel install ncurses-compat-libs <---- Only for Rocky Linux 9 OS
+
+These commands create a group named mysql and a user named mysql who belongs to that group. The -r option creates a system account, and -s /bin/false means the user cannot log in.
+# groupadd mysql
+
+# useradd -r -g mysql -s /bin/false mysql
+
+Navigate to the /softwares directory and download the MySQL package from the specified URL.
+# cd /softwares
+
+# wget https://downloads.mysql.com/archives/get/p/23/file/mysql-8.0.31-linux-glibc2.12-x86_64.tar.xz
+
+Extract the downloaded MySQL archive file.
+# tar -xvf mysql-8.0.31-linux-glibc2.12-x86_64.tar.xz
+
+Copy the extracted MySQL directory to /opt and rename it to mysql for easier access.
+# cp -r  /softwares/mysql-8.0.31-linux-glibc2.12-x86_64   /opt/mysql
+
+Navigate to the MySQL directory, create a directory named mysql-files, change its owner to the mysql user and group, and set its permissions to 750 (owner can read, write, and execute; group can read and execute).
+# cd /opt/mysql
+
+# mkdir mysql-files
+
+# chown mysql:mysql mysql-files
+
+# chmod 750 mysql-files
+
+Initialize the MySQL database. This sets up the necessary data files and directories. The --user=mysql ensures that MySQL runs as the mysql user. 
+Note: In this step you will get temporary "root" password which is needed to login first time to MySQL.
+# bin/mysqld --initialize --user=mysql
+
+Start MySQL in safe mode in the background. Safe mode is a way to start MySQL with some safety checks and logging.
+# bin/mysqld_safe --user=mysql &
+
+Open a new file to create a systemd service, which helps manage MySQL as a service on the system and add the following content to the mysql.service file:
+# vi /etc/systemd/system/mysql.service
+
+[Unit]
+
+Description=MySQL Server
+
+After=network.target
+
+[Service]
+
+Type=simple
+
+ExecStart=/opt/mysql/bin/mysqld --defaults-file=/etc/my.cnf
+
+User=mysql
+
+Group=mysql
+
+Restart=always
+
+[Install]
+
+WantedBy=multi-user.target
+
+
+
+Where:
+
+[Unit]: Describes the service, with a brief description and a dependency (After=network.target) indicating that MySQL should start after the network is available.
+[Service]: Defines how the service runs:
+Type=simple: Simple service type.
+ExecStart=/opt/mysql/bin/mysqld --defaults-file=/etc/my.cnf: Command to start MySQL, pointing to the configuration file.
+User=mysql: Run as the mysql user.
+Group=mysql: Run as the mysql group.
+Restart=always: Automatically restart if the service stops.
+[Install]: Specifies that this service should start in the multi-user target, which is the standard runlevel for most Linux systems.
+
+Enable MySQL service to start automatically at boot time and Start
+# sudo systemctl enable mysql
+
+# sudo systemctl start mysql
+
+# sudo systemctl status mysql
+
+
+
+
+Change to the MySQL installation directory and then log in to MySQL as the root user. The -p option will prompt you to enter the temporary password.
+# cd /opt/mysql/
+
+#./bin/mysql -u root -p             ----> Login using temporary password
+
+After logging in, change the root user's password to 1q2w!Q@W. This new password is what you'll use to log in as the root user from now on.
+mysql> ALTER USER 'root'@'localhost' IDENTIFIED BY '1q2w!Q@W';
+
+This command refreshes the MySQL server's privileges, ensuring that the changes you made to the user permissions take effect immediately.
+mysql> flush privileges;
+
+Create a new database named ibgapp. This is where you will store your application's data.
+mysql> create database ibgapp;
+
+Create a new MySQL user named ibgapp with the password 1q2w!Q@W. This user will be used to interact with the ibgapp database.
+mysql> CREATE USER 'ibgapp'@'localhost' IDENTIFIED BY '1q2w!Q@W';
+
+Give the ibgapp user full permissions to do anything with the ibgapp database. The WITH GRANT OPTION allows this user to grant permissions to others.
+mysql> GRANT ALL PRIVILEGES ON ibgapp.* TO 'ibgapp'@'localhost' WITH GRANT OPTION;
+
+Refresh the MySQL server's privileges again to ensure the new user's permissions are applied.
+mysql> FLUSH PRIVILEGES;
+
+Exit the MySQL command line
+mysql> quit
+
+This command lists all the network connections and listening ports on your server. It helps you verify that MySQL is running and listening on its port (usually 3306)
+
+#netstat -ntlp
+
+
+
+To Integrate Tomcat with MySQL you need MySQL connector:
+This command installs the MySQL Connector for Java using the yum package manager. The connector allows Java applications, like those running on Tomcat, to connect to a MySQL database. The specific version being installed is 8.0.30.
+#yum install https://downloads.mysql.com/archives/get/p/3/file/mysql-connector-java-8.0.30-1.el8.noarch.rpm
+
+Copy the MySQL Connector JAR file from its installation location (/usr/share/java/) to the lib directory of your Tomcat installation (/opt/tomcat/lib/). This makes the connector available to Tomcat so it can use it to connect to MySQL.
+#sudo cp /usr/share/java/mysql-connector-java.jar /opt/tomcat/lib/mysql-connector-java.jar
+
+Change your current directory to Tomcat's bin directory. This is where the scripts to control Tomcat are located.
+#cd /opt/tomcat/bin
+
+Run the shutdown script to stop the Tomcat server. This is necessary to apply the changes made by adding the MySQL Connector.
+#./shutdown.sh
+
+Run the startup script to start the Tomcat server again. This will load the new MySQL Connector and any other changes you've made.
+#./startup.sh
+
+
+
+Create JSP page to test Database connectivity:
+
+Open the dbtest.jsp file located in the examples directory of the Tomcat webapps folder using the vi editor. This file will be used to test the connection to the MySQL database.
+This JSP (JavaServer Page) code will try to connect to the MySQL database named ibgapp and display a message indicating whether the connection was successful or not.
+
+#vi /opt/tomcat/webapps/examples/jsp/dbtest.jsp
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<%@ page import="java.sql.*" %>
+<%@ page import="java.io.*" %>
+<html>
+<head>
+<title>Connection with mysql database</title>
+</head>
+<body>
+<h1>Connection status </h1>
+<%
+try {
+    // Create string of connection URL
+    String connectionURL = "jdbc:mysql://localhost:3306/ibgapp";
+    Connection connection = null;
+    // Load JDBC driver
+    Class.forName("com.mysql.jdbc.Driver").newInstance();
+    // Create connection
+    connection = DriverManager.getConnection(connectionURL, "ibgapp", "1q2w!Q@W");
+    // Check if connection is established
+    if(!connection.isClosed()) {
+%>
+<font size="+3" color="green"><b>
+<%
+    out.println("Successfully connected to MySQL server using TCP/IP...");
+    connection.close();
+    }
+} catch(Exception ex) {
+%>
+</font>
+<font size="+3" color="red"><b>
+<%
+    out.println("Unable to connect to database.");
+}
+%>
+</font>
+</body>
+</html>
+
+
+
+Finally, Access the DBTEST page:
+Open your web browser and go to the URL http://public_ip/examples/jsp/dbtest.jsp (replace public_ip with your server's actual IP address). This will load the dbtest.jsp page, which will attempt to connect to the MySQL database and display whether the connection was successful or not.
+http://public_ip/examples/jsp/dbtest.jsp
+
+Final Outcome:
+By following these steps, you have set up an integrated environment where:
+
+Apache HTTP Server acts as a front-end, handling HTTP requests.
+Apache Tomcat runs Java web applications and connects to the MySQL database.
+MySQL serves as the backend database for storing application data.
+This setup is typical for enterprise application hosting, providing a robust and scalable environment for running web applications with a reliable database backend.
+
