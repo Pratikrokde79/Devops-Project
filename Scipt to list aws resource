@@ -1,0 +1,36 @@
+#
+######################
+#
+# Author : Pratik Rokde
+# Date : 29/1/2025
+#
+#   version : v1
+#
+######################
+#
+# this script will list Aws resource usage
+#
+# #########################################################################################
+#
+
+set -x
+set -u
+# Aws S3 list
+echo " print list of s3 buckets "
+
+aws s3 ls
+
+# Aws Ec2 instance list
+echo " print list of ec2 instances "
+aws ec2 describe-instances | jq '.Reservations[].Instances[].InstanceId'
+
+# AWS lambda list
+echo " print list of lambda function "
+aws lambda list-functions
+
+# Aws IAM User list
+echo " print list of IAm User "
+aws iam list-users
+
+
+#
