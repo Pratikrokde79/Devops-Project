@@ -1,0 +1,305 @@
+Prepare IT Server Infra for High Volume Traffic Applications
+
+
+
+
+#yum install apr*
+#yum install gcc  wget net-tools
+#yum install pcre pcre-devel zlib zlib-devel openssl-devel
+#sudo yum install redhat-rpm-config
+
+1) Install Apache Backend Servers
+----------------------------------------------------------------------------------------------------
+
+Install Apache (bk1) - EC2 Instance 1
+
+----------------------------------------------------------------------------------------------------
+
+#wget https://archive.apache.org/dist/httpd/httpd-2.4.58.tar.gz
+
+#tar -zxvf httpd-2.4.58.tar.gz
+
+#cd httpd-2.4.58
+
+#./configure --prefix=/opt/apache81_bk1 --enable-mods-shared=all --enable-so --enable-cgi --enable-proxy --enable-headers --enable-expires --enable-vhost-alias --enable-info --enable-rewrite --enable-speling	--enable-usertrack --enable-deflate --enable-ssl --enable-mime-magic --enable-unique-id  --with-apr=/usr/bin/apr-1-config
+
+#make
+
+#make install
+
+
+
+#vi /opt/apache81_bk1/conf/httpd.conf
+
+Listen 81
+
+User apache
+
+Group apache
+
+
+
+#/opt/apache81_bk1/bin/apachectl -k restart
+
+#ps -aef | grep http
+
+#rm -rf /softwares/httpd-2.4.6
+
+----------------------------------------------------------------------------------------------------
+
+
+
+----------------------------------------------------------------------------------------------------
+
+Install Apache (bk2) - EC2 Instance 2
+
+----------------------------------------------------------------------------------------------------
+
+#wget https://archive.apache.org/dist/httpd/httpd-2.4.58.tar.gz
+
+#tar -zxvf httpd-2.4.58.tar.gz
+
+#cd httpd-2.4.58
+
+#./configure --prefix=/opt/apache82_bk2 --enable-mods-shared=all --enable-so --enable-cgi --enable-proxy --enable-headers --enable-expires --enable-vhost-alias --enable-info --enable-rewrite --enable-speling	--enable-usertrack --enable-deflate --enable-ssl --enable-mime-magic --enable-unique-id --with-apr=/usr/bin/apr-1-config
+
+#make
+
+#make install
+
+
+
+#vi /opt/apache82_bk2/conf/httpd.conf
+
+Listen 82
+
+User apache
+
+Group apache
+
+
+
+#/opt/apache82_bk2/bin/apachectl -k restart
+
+#ps -aef | grep http
+
+#rm -rf /softwares/httpd-2.4.6
+
+----------------------------------------------------------------------------------------------------
+
+
+
+-------------------------------------------------------------------------------------------------
+
+HAProxy with SSL
+-------------------------------------------------------------------------------------------------
+
+2) Install Dependencies
+
+----------------------------------------------------------------------------------------------------
+
+gcc
+
+zlib-devel
+
+openssl-devel
+
+pcre-devel
+
+apr-devel 
+
+libxml2-devel
+
+libcurl-devel
+
+expat-devel
+
+
+
+-------------------------------------------------------------------------------------------------
+
+2) Install HAProxy (ft) EC2 Instance 3
+
+-------------------------------------------------------------------------------------------------
+
+#cd /softwares
+
+#wget https://www.haproxy.org/download/2.8/src/haproxy-2.8.7.tar.gz
+
+#tar -zxvf haproxy-2.8.7.tar.gz
+
+#cd haproxy-2.8.7
+
+#make TARGET=linux-glibc USE_OPENSSL=1 USE_PCRE2=1
+
+#make PREFIX=/opt/haproxy-ssl install
+
+#rm -rf /softwares/haproxy-1.5-dev17
+
+
+
+-------------------------------------------------------------------------------------------------
+
+3) Generate SSL Certificates using openssl
+
+-------------------------------------------------------------------------------------------------
+
+#cd /opt/haproxy-ssl/
+
+#mkdir certs
+
+#cd /opt/haproxy-ssl/certs/
+
+#openssl genrsa -out haproxy.key 2048
+
+#openssl req -new -key haproxy.key -out haproxy.csr
+
+	Country Name (2 letter code) [XX]:IN
+
+	State or Province Name (full name) []:MAHARASHTRA
+
+	Locality Name (eg, city) [Default City]:NAGPUR
+
+	Organization Name (eg, company) [Default Company Ltd]:example
+
+	Organizational Unit Name (eg, section) []:IT
+
+	Common Name (eg, your name or your server's hostname) []:secure.example.com
+
+	Email Address []: root@secure.example.com
+
+	Please enter the following 'extra' attributes
+
+	to be sent with your certificate request
+
+	A challenge password []:
+
+	An optional company name []:
+
+#openssl x509 -req -days 365 -in haproxy.csr -signkey haproxy.key -out haproxy.crt
+
+#cat haproxy.key haproxy.crt > haproxy.pem
+
+
+
+-------------------------------------------------------------------------------------------------
+
+4) Configure HAProxy to inbuild SSL Support
+
+-------------------------------------------------------------------------------------------------
+
+#vi /opt/haproxy-ssl/haproxy.cfg
+
+global
+
+        daemon
+
+        maxconn         25000
+
+defaults
+
+        mode http
+
+        timeout connect 15000ms
+
+        timeout client 50000ms
+
+        timeout server 50000ms
+
+        timeout queue 60s
+
+listen frontend_http 
+
+        bind 0.0.0.0:80
+
+        mode http
+
+        default_backend bk_http
+
+        acl https_uri url_beg /https/
+
+        redirect prefix https://secure.example.com if https_uri
+
+frontend ft_https
+
+        mode http
+
+        bind 0.0.0.0:443 ssl crt /opt/haproxy-ssl/certs/haproxy.pem
+
+        #option forceclose
+
+        option  forwardfor
+
+        acl http_uri url_beg /
+
+        acl https_uri url_beg /https/
+
+        redirect prefix http://secure.example.com if !https_uri http_uri
+
+        default_backend bk_http
+
+backend bk_http
+
+        mode http
+
+        cookie SRV insert indirect nocache
+
+        balance leastconn
+
+        #option forceclose
+
+        option persist
+
+        option redispatch
+
+        option  forwardfor
+
+        server server1 PVT_IP_ADDR_OF_BK1:81 cookie server1_cookie maxconn 1024 check
+
+        server server2 PVT_IP_ADDR_OF_BK2:82 cookie server2_cookie maxconn 1024 check
+
+        acl force_sticky_server1 hdr_sub(server1_cookie) TEST=true
+
+        force-persist if force_sticky_server1
+
+        acl force_sticky_server2 hdr_sub(server2_cookie) TEST=true
+
+        force-persist if force_sticky_server2
+
+-------------------------------------------------------------------------------------------------
+
+5) Check the configuration file for errors and start haproxy
+
+-------------------------------------------------------------------------------------------------
+
+> To check any configuration error in file use below command
+
+#/opt/haproxy-ssl/sbin/haproxy -c -f /opt/haproxy-ssl/haproxy.cfg
+
+> To start haproxy use 
+
+#/opt/haproxy-ssl/sbin/haproxy -f /opt/haproxy-ssl/haproxy.cfg
+
+> To check HAProxy is started and ports are listening on server.
+
+#ps -aef | grep haproxy
+
+#netstat -ntlp
+
+-------------------------------------------------------------------------------------------------
+
+6) Make host file entry in your windows laptop and Access Web
+
+-------------------------------------------------------------------------------------------------
+
+Edit File and add entry: C:\Windows\System32\drivers\etc\hosts
+
+IP_ADDR_OF_SERVER		secure.example.com     
+
+-------------------------------------------------------------------------------------------------
+
+7) Access Web
+
+-------------------------------------------------------------------------------------------------
+
+https://secure.example.com
